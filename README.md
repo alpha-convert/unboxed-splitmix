@@ -1,4 +1,4 @@
-# Splittable Random Number Generation with Unboxed Arithmetic
+# Splittable Random Number Generation with Unboxed Types
 
 This is verbatim reimplementation of Jane Street's [Splittable_random](https://github.com/janestreet/splittable_random/) RNG library, which is in turn an implementation of the [splitmix paper](https://gee.cs.oswego.edu/dl/papers/oopsla14.pdf).
 
@@ -12,3 +12,7 @@ This library instead uses the following type, which lets us implement all of the
 ```ocaml
 type t = { mutable seed : int64#; odd_gamma : int64# }
 ```
+
+## Dependencies
+
+Builds on [OCaml with Jane Street extensions](https://github.com/janestreet/opam-repository/tree/with-extensions)
