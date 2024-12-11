@@ -14,7 +14,7 @@ let of_int seed = { seed = I.of_int seed; odd_gamma = #0x9e37_79b9_7f4a_7c15L}
 
 let copy { seed; odd_gamma } = { seed; odd_gamma }
 
-(* we specialize three different versions of this to esnure that the `int` argument to I.shift_right_logical is
+(* we specialize three different versions of this to ensure statically that the `int` argument to I.shift_right_logical is
 never boxed in the library. *)
 let [@inline always] mix_bits_33 z = I.logxor z (I.shift_right_logical z 33)
 let [@inline always] mix_bits_27 z = I.logxor z (I.shift_right_logical z 27)
@@ -95,6 +95,7 @@ let int64u =
   fun (state @ local) ~lo ~hi ->
     if I.compare lo hi > 0
     then Error.raise (Error.t_of_sexp (Sexplib0.Sexp.message "int64: crossed bounds" ["",Int64.sexp_of_t (I.to_int64 lo);"",Int64.sexp_of_t (I.to_int64 hi)] ));
+    (* TODO: fix this roundtrip through Int64. *)
     let i64_max = I.of_int64 (Int64.max_value) in
     let diff = I.sub hi lo in
     if I.equal diff i64_max
@@ -116,15 +117,8 @@ let floatu =
     if F.is_finite range
     then F.add lo (F.mul (unit_floatu state) range)
     else (
-      (* If [hi - lo] is infinite, then [hi + lo] is finite because [hi] and [lo] have
-         opposite signs. *)
       let mid = F.div (F.add hi lo) #2. in
       if bool state
-         (* Depending on rounding, the recursion with [~hi:mid] might be inclusive of [mid],
-         which would mean the two cases overlap on [mid]. The alternative is to increment
-         or decrement [mid] using [one_ulp] in either of the calls, but then if the first
-         case is exclusive we leave a "gap" between the two ranges. There's no perfectly
-         uniform solution, so we use the simpler code that does not call [one_ulp]. *)
       then finite_float state ~lo ~hi:mid
       else finite_float state ~lo:mid ~hi)
   in
