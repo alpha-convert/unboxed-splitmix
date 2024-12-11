@@ -5,13 +5,13 @@
 (generate_opam_files true)
 
 (source
- (github alpha_convert/unboxed_splitmix))
+ (github alpha-convert/unboxed_splitmix))
 
 (authors "Joseph Cutler <jwc@seas.upenn.edu>")
 
 (maintainers "Maintainer Name <maintainer@example.com>")
 
-(license LICENSE)
+(license MIT)
 
 (documentation https://url/to/documentation)
 
