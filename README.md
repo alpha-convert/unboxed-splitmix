@@ -1,0 +1,1 @@
+This is reimplementation of Jane Street's [Splittable_random](https://github.com/janestreet/splittable_random/) library, which is in turn an implementation of the [splitmix paper](https://gee.cs.oswego.edu/dl/papers/oopsla14.pdf). Unlike Splittable_random (or any of the other OCaml implementations of splitmix), this one uses unboxed types.

@@ -1,0 +1,4 @@
+(library
+ (public_name splitmix)
+ (libraries core stdlib_upstream_compatible)
+ (name splitmix))
