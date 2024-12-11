@@ -1,13 +1,13 @@
 (lang dune 3.17)
 
-(name splitmix)
+(name unboxed_splitmix)
 
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github alpha_convert/unboxed_splitmix))
 
-(authors "Author Name <author@example.com>")
+(authors "Joseph Cutler <jwc@seas.upenn.edu>")
 
 (maintainers "Maintainer Name <maintainer@example.com>")
 
@@ -16,10 +16,10 @@
 (documentation https://url/to/documentation)
 
 (package
- (name splitmix)
- (synopsis "Native SplitMix implementation")
- (description "An implementation of the SplitMix algorithm using the C FFI of Ocaml")
- (depends ocaml dune)
+ (name unboxed_splitmix)
+ (synopsis "SplitMix implementation with Unboxed Types")
+ (description "An implementation of the SplitMix algorithm using unboxed types")
+ (depends ocaml__5_2_0+flambda2 dune)
  (tags
   ("add topics" "to describe" your project)))
 
