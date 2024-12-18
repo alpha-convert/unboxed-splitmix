@@ -76,12 +76,11 @@ let bool (state @ local) =
 let remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
     I.compare (I.sub draw remainder) (I.sub draw_maximum remainder_maximum) <= 0
 
-let int64u =
-  let rec between state ~lo ~hi =
+let rec between state ~lo ~hi =
     let draw = next_int64 state in
     if I.compare lo draw <= 0 && I.compare draw hi <= 0 then draw else between state ~lo ~hi
-  in
-  let rec non_negative_up_to state maximum =
+
+let rec non_negative_up_to state maximum =
     let draw = I.logand (next_int64 state) (I.of_int64 Int64.max_value) in
     let remainder = I.rem draw (I.succ maximum) in
     if remainder_is_unbiased
@@ -91,8 +90,8 @@ let int64u =
           ~remainder_maximum:maximum
     then remainder
     else non_negative_up_to state maximum
-  in
-  fun (state @ local) ~lo ~hi ->
+
+let [@zero_alloc] int64u (state @local) ~lo ~hi =
     if I.compare lo hi > 0
     then Error.raise (Error.t_of_sexp (Sexplib0.Sexp.message "int64: crossed bounds" ["",Int64.sexp_of_t (I.to_int64 lo);"",Int64.sexp_of_t (I.to_int64 hi)] ));
     (* TODO: fix this roundtrip through Int64. *)
@@ -106,13 +105,13 @@ let int64u =
 
 let double_ulp = 2. **. -53.
 
+
 (* TODO: fix this roundtrip through boxed float... *)
 let unit_floatu_from_int64u int64u = F.of_float (I.to_float (I.shift_right_logical int64u 11) *. double_ulp)
 
 let unit_floatu state = unit_floatu_from_int64u (next_int64 state)
 
-let floatu =
-  let rec finite_float state ~lo ~hi =
+let rec finite_float state ~lo ~hi =
     let range = F.sub hi lo in
     if F.is_finite range
     then F.add lo (F.mul (unit_floatu state) range)
@@ -121,7 +120,8 @@ let floatu =
       if bool state
       then finite_float state ~lo ~hi:mid
       else finite_float state ~lo:mid ~hi)
-  in
+
+let [@zero_alloc] floatu =
   fun (state @ local) ~lo ~hi ->
     if not (F.is_finite lo && F.is_finite hi) then
       Error.raise (Error.t_of_sexp (Sexplib0.Sexp.message "float: bounds are not finite numbers" ["",Float.sexp_of_t (F.to_float lo);"",Float.sexp_of_t (F.to_float hi)] ));
