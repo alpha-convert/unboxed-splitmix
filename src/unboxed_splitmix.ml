@@ -71,12 +71,6 @@ let [@zero_alloc] perturb t salt =
 ;;
 
 let bool (state) = 
-  let t_repr = Obj.repr state in
-  print_endline "Inide US:";
-  print_endline ("US is_block: " ^ (Bool.to_string (Obj.is_block t_repr)));
-  print_endline ("US tag: " ^ (Int.to_string (Obj.tag t_repr)));
-  print_endline ("US[0] is_block: " ^ (Bool.to_string (Obj.is_block (Obj.field t_repr 0))));
-  print_endline ("US[0] tag: " ^ (Int.to_string (Obj.tag (Obj.field t_repr 0))));
   I.equal (I.logand (next_int64 state) #1L) #0L
 
 let [@zero_alloc] remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
