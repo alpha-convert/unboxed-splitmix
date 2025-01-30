@@ -158,7 +158,9 @@ module DropIn = struct
   
   let global_dropin_seed: t = { seed = I.of_int64 0L; odd_gamma = I.of_int64 0L }
 
-  type srt_repr = { mutable srt_seed : Int64.t; mutable srt_odd_gamma : Int64.t }
+  type srt_repr = { srt_seed : Int64.t; srt_odd_gamma : Int64.t }
+
+  external restore_from : Splittable_random.t -> t -> unit = "restore_from"
   
   let [@zero_alloc] replace_gds (srt : Splittable_random.t) =
     let srt_repr : srt_repr = Obj.magic srt in
@@ -166,10 +168,8 @@ module DropIn = struct
     global_dropin_seed.odd_gamma <- I.of_int64 srt_repr.srt_odd_gamma;
     ()
 
-  let restore_from_gds (srt : Splittable_random.t) =
-    let srt_repr : srt_repr = Obj.magic srt in
-    srt_repr.srt_seed <- I.to_int64 global_dropin_seed.seed;
-    srt_repr.srt_odd_gamma <- I.to_int64 global_dropin_seed.odd_gamma
+  let [@zero_alloc assume] restore_from_gds (srt : Splittable_random.t) =
+    restore_from srt global_dropin_seed
 
   let int (sm : Splittable_random.t) ~lo ~hi =
     replace_gds sm;
@@ -177,7 +177,7 @@ module DropIn = struct
     restore_from_gds sm;
     i
 
-  let bool (sm : Splittable_random.t) =
+  let [@zero_alloc] bool (sm : Splittable_random.t) : bool =
     replace_gds sm;
     let b = bool global_dropin_seed in
     restore_from_gds sm;
