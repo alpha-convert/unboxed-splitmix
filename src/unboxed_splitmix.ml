@@ -72,7 +72,7 @@ let [@zero_alloc] perturb t salt =
 
 let bool (state) = 
   let t_repr = Obj.repr state in
-  print_endline "In DropIn bool:";
+  print_endline "Inide US:";
   print_endline ("US is_block: " ^ (Bool.to_string (Obj.is_block t_repr)));
   print_endline ("US tag: " ^ (Int.to_string (Obj.tag t_repr)));
   print_endline ("US[0] is_block: " ^ (Bool.to_string (Obj.is_block (Obj.field t_repr 0))));
