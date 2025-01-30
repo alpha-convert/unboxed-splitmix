@@ -18,6 +18,6 @@ CAMLprim value sm_odd_gamma(value sm)
 CAMLprim value sm_clobber_seed(value sm,value sd)
 {
     CAMLparam2(sm,sd);
-    Store_field(sd,sm,0);
+    Store_field(sm,0,sd);
     CAMLreturn(Val_unit);
 }
