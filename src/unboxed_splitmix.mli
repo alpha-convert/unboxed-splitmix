@@ -6,9 +6,9 @@ val create : Core.Random.State.t -> t
 val split : t @ local -> t
 val perturb : t @ local -> int -> unit [@@zero_alloc]
 
-val bool : t -> bool @ local
-val int64u : t @ local -> lo:int64# -> hi:int64# -> int64#
-val floatu : t -> lo:float# -> hi:float# -> float#
+val bool : t -> bool @ local [@@zero_alloc]
+val int64u : t @ local -> lo:int64# -> hi:int64# -> int64# [@@zero_alloc]
+val floatu : t -> lo:float# -> hi:float# -> float# [@@zero_alloc]
 
 val int : t @ local -> lo:int -> hi:int -> int
 val int64 : t @ local -> lo:int64 -> hi:int64 -> int64

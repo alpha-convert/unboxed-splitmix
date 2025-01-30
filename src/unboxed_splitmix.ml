@@ -71,7 +71,7 @@ let [@zero_alloc] perturb t salt =
   t.seed <- next
 ;;
 
-let bool (state) = 
+let [@zero_alloc] bool (state) = 
   I.equal (I.logand (next_int64 state) #1L) #0L
 
 let [@zero_alloc] remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
@@ -122,7 +122,7 @@ let rec finite_float state ~lo ~hi =
       then finite_float state ~lo ~hi:mid
       else finite_float state ~lo:mid ~hi)
 
-let floatu =
+let [@zero_alloc] floatu =
   fun (state) ~lo ~hi ->
     if not (F.is_finite lo && F.is_finite hi) then
       Error.raise (Error.t_of_sexp (Sexplib0.Sexp.message "float: bounds are not finite numbers" ["",Float.sexp_of_t (F.to_float lo);"",Float.sexp_of_t (F.to_float hi)] ));
