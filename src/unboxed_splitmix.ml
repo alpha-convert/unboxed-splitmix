@@ -70,7 +70,13 @@ let [@zero_alloc] perturb t salt =
   t.seed <- next
 ;;
 
-let [@zero_alloc] bool (state @ local) = 
+let bool (state) = 
+  let t_repr = Obj.repr state in
+  print_endline "In DropIn bool:";
+  print_endline ("US is_block: " ^ (Bool.to_string (Obj.is_block t_repr)));
+  print_endline ("US tag: " ^ (Int.to_string (Obj.tag t_repr)));
+  print_endline ("US[0] is_block: " ^ (Bool.to_string (Obj.is_block (Obj.field t_repr 0))));
+  print_endline ("US[0] tag: " ^ (Int.to_string (Obj.tag (Obj.field t_repr 0))));
   I.equal (I.logand (next_int64 state) #1L) #0L
 
 let [@zero_alloc] remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
@@ -121,8 +127,8 @@ let rec finite_float state ~lo ~hi =
       then finite_float state ~lo ~hi:mid
       else finite_float state ~lo:mid ~hi)
 
-let [@zero_alloc] floatu =
-  fun (state @ local) ~lo ~hi ->
+let floatu =
+  fun (state) ~lo ~hi ->
     if not (F.is_finite lo && F.is_finite hi) then
       Error.raise (Error.t_of_sexp (Sexplib0.Sexp.message "float: bounds are not finite numbers" ["",Float.sexp_of_t (F.to_float lo);"",Float.sexp_of_t (F.to_float hi)] ));
     if F.compare lo hi > 0 then
@@ -131,7 +137,7 @@ let [@zero_alloc] floatu =
 ;;
 
 let float =
-  fun (state @ local) ~lo ~hi -> F.to_float (floatu state ~lo:(F.of_float lo) ~hi:(F.of_float hi))
+  fun (state) ~lo ~hi -> F.to_float (floatu state ~lo:(F.of_float lo) ~hi:(F.of_float hi))
 ;;
 
 let int64 =
@@ -160,16 +166,22 @@ module DropIn = struct
     (* let og = sm_odd_gamma sm in *)
     (* {seed = I.of_int64 sd ; odd_gamma = I.of_int64 og} *)
 
-  let int sm ~lo ~hi =
+  let int (sm : Splittable_random.t) ~lo ~hi =
     int (Obj.magic sm) ~lo ~hi
 
-  let bool sm =
+  let bool (sm : Splittable_random.t) =
+    let sm_repr = Obj.repr sm in
+    print_endline "In DropIn bool:";
+    print_endline ("SM is_block: " ^ (Bool.to_string (Obj.is_block sm_repr)));
+    print_endline ("SM tag: " ^ (Int.to_string (Obj.tag sm_repr)));
+    print_endline ("SM[0] is_block: " ^ (Bool.to_string (Obj.is_block (Obj.field sm_repr 0))));
+    print_endline ("SM[0] tag: " ^ (Int.to_string (Obj.tag (Obj.field sm_repr 0))));
     bool (Obj.magic sm)
 
-  let float sm ~lo ~hi =
+  let float (sm : Splittable_random.t) ~lo ~hi =
     float (Obj.magic sm) ~lo ~hi
 
-  let int64 sm ~lo ~hi =
+  let int64 (sm : Splittable_random.t) ~lo ~hi =
     int64 (Obj.magic sm) ~lo ~hi
 
 end
