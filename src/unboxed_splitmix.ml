@@ -7,7 +7,8 @@ open Core
 module I = Stdlib_upstream_compatible.Int64_u
 module F = Stdlib_upstream_compatible.Float_u
 
-type t = { mutable seed : int64#; odd_gamma : int64# }
+(* odd_gamma doesn't technically need to be mutable, but we make it mutable so that the "global state" in DropIn works... *)
+type t = { mutable seed : int64#; mutable odd_gamma : int64# }
 
 
 let of_int seed = { seed = I.of_int seed; odd_gamma = #0x9e37_79b9_7f4a_7c15L}
@@ -146,36 +147,52 @@ let int state ~lo ~hi =
 (* external sm_odd_gamma : Splittable_random.t -> Int64.t = "sm_odd_gamma" *)
 (* external clobber_seed : Splittable_random.t -> Int64.t -> unit = "sm_clobber_seed" *)
 
-
-(*
-A Splittable_random.t =  { mutable seed : int64 ; odd_gamma : int64 }
-
- - is a block (tag 0).
- - Field 0: is a block, with tag 255 (custom_tag)
- - Field 1: is a block, with tag 255 (custom_tag)
-*)
 module DropIn = struct
-  (* let copy_sm sm = *)
-    (* let sd = sm_seed sm in *)
-    (* let og = sm_odd_gamma sm in *)
-    (* {seed = I.of_int64 sd ; odd_gamma = I.of_int64 og} *)
+  (*
+    To use unboxed splitmix drop-in replacement for splitmix, we need to
+    (1) convert a normal splittable_random.t into an unboxed_splitmix.t
+    (2) call the sampling function
+    (3) convert the updated unboxed_splitmix.t back into a splittable_random.t
+
+  *)
+  
+  let global_dropin_seed: t = { seed = I.of_int64 0L; odd_gamma = I.of_int64 0L }
+
+  type srt_repr = { mutable srt_seed : Int64.t; mutable srt_odd_gamma : Int64.t }
+  
+  let [@zero_alloc] replace_gds (srt : Splittable_random.t) =
+    let srt_repr : srt_repr = Obj.magic srt in
+    global_dropin_seed.seed <- I.of_int64 srt_repr.srt_seed;
+    global_dropin_seed.odd_gamma <- I.of_int64 srt_repr.srt_odd_gamma;
+    ()
+
+  let restore_from_gds (srt : Splittable_random.t) =
+    let srt_repr : srt_repr = Obj.magic srt in
+    srt_repr.srt_seed <- I.to_int64 global_dropin_seed.seed;
+    srt_repr.srt_odd_gamma <- I.to_int64 global_dropin_seed.odd_gamma
 
   let int (sm : Splittable_random.t) ~lo ~hi =
-    int (Obj.magic sm) ~lo ~hi
+    replace_gds sm;
+    let i = int global_dropin_seed ~lo ~hi in
+    restore_from_gds sm;
+    i
 
   let bool (sm : Splittable_random.t) =
-    let sm_repr = Obj.repr sm in
-    print_endline "In DropIn bool:";
-    print_endline ("SM is_block: " ^ (Bool.to_string (Obj.is_block sm_repr)));
-    print_endline ("SM tag: " ^ (Int.to_string (Obj.tag sm_repr)));
-    print_endline ("SM[0] is_block: " ^ (Bool.to_string (Obj.is_block (Obj.field sm_repr 0))));
-    print_endline ("SM[0] tag: " ^ (Int.to_string (Obj.tag (Obj.field sm_repr 0))));
-    bool (Obj.magic sm)
+    replace_gds sm;
+    let b = bool global_dropin_seed in
+    restore_from_gds sm;
+    b
 
   let float (sm : Splittable_random.t) ~lo ~hi =
-    float (Obj.magic sm) ~lo ~hi
+    replace_gds sm;
+    let f = float global_dropin_seed ~lo ~hi in
+    restore_from_gds sm;
+    f
 
   let int64 (sm : Splittable_random.t) ~lo ~hi =
-    int64 (Obj.magic sm) ~lo ~hi
+    replace_gds sm;
+    let i64 = int64 global_dropin_seed ~lo ~hi in
+    restore_from_gds sm;
+    i64
 
 end
