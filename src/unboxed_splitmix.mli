@@ -16,6 +16,7 @@ val float : t @ local -> lo:float -> hi:float -> float
 
 module DropIn : sig
     val copy_sm : Splittable_random.t -> t
+    val bool : Splittable_random.t -> bool
     val int : Splittable_random.t -> lo:int -> hi:int -> int
     val int64 : Splittable_random.t -> lo:int64 -> hi:int64 -> int64
     val float : Splittable_random.t -> lo:float -> hi:float -> float

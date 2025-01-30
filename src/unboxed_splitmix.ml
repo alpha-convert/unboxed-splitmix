@@ -160,6 +160,13 @@ module DropIn = struct
     (* would love to fix this roundtrip through int64.t, but clobber_seed can't be defined with an int64# *)
     i
 
+  let bool sm =
+    let us = copy_sm sm in
+    let b = bool us in
+    clobber_seed sm (I.to_int64 us.seed);
+    (* would love to fix this roundtrip through int64.t, but clobber_seed can't be defined with an int64# *)
+    b
+
   let float sm ~lo ~hi =
     let us = copy_sm sm in
     let f = float us ~lo ~hi in
