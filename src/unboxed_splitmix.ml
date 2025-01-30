@@ -142,41 +142,34 @@ let int state ~lo ~hi =
   I.to_int (int64u state ~lo:(I.of_int lo) ~hi:(I.of_int hi))
 ;;
 
-external sm_seed : Splittable_random.t -> Int64.t = "sm_seed"
-external sm_odd_gamma : Splittable_random.t -> Int64.t = "sm_odd_gamma"
-external clobber_seed : Splittable_random.t -> Int64.t -> unit = "sm_clobber_seed"
+(* external sm_seed : Splittable_random.t -> Int64.t = "sm_seed" *)
+(* external sm_odd_gamma : Splittable_random.t -> Int64.t = "sm_odd_gamma" *)
+(* external clobber_seed : Splittable_random.t -> Int64.t -> unit = "sm_clobber_seed" *)
 
 
+(*
+A Splittable_random.t =  { mutable seed : int64 ; odd_gamma : int64 }
+
+ - is a block (tag 0).
+ - Field 0: is a block, with tag 255 (custom_tag)
+ - Field 1: is a block, with tag 255 (custom_tag)
+*)
 module DropIn = struct
-  let copy_sm sm =
-    let sd = sm_seed sm in
-    let og = sm_odd_gamma sm in
-    {seed = I.of_int64 sd ; odd_gamma = I.of_int64 og}
+  (* let copy_sm sm = *)
+    (* let sd = sm_seed sm in *)
+    (* let og = sm_odd_gamma sm in *)
+    (* {seed = I.of_int64 sd ; odd_gamma = I.of_int64 og} *)
 
   let int sm ~lo ~hi =
-    let us = copy_sm sm in
-    let i = int us ~lo ~hi in
-    clobber_seed sm (I.to_int64 us.seed);
-    (* would love to fix this roundtrip through int64.t, but clobber_seed can't be defined with an int64# *)
-    i
+    int (Obj.magic sm) ~lo ~hi
 
   let bool sm =
-    let us = copy_sm sm in
-    let b = bool us in
-    clobber_seed sm (I.to_int64 us.seed);
-    (* would love to fix this roundtrip through int64.t, but clobber_seed can't be defined with an int64# *)
-    b
+    bool (Obj.magic sm)
 
   let float sm ~lo ~hi =
-    let us = copy_sm sm in
-    let f = float us ~lo ~hi in
-    clobber_seed sm (I.to_int64 us.seed);
-    f
+    float (Obj.magic sm) ~lo ~hi
 
   let int64 sm ~lo ~hi =
-    let us = copy_sm sm in
-    let i64 = int64 us ~lo ~hi in
-    clobber_seed sm (I.to_int64 us.seed);
-    i64
+    int64 (Obj.magic sm) ~lo ~hi
 
 end
