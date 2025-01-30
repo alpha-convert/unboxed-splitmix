@@ -1,4 +1,5 @@
 (library
  (public_name unboxed_splitmix)
- (libraries core stdlib_upstream_compatible)
+ (libraries core stdlib_upstream_compatible splittable_random)
+ (foreign_stubs (language c) (names convert))
  (name unboxed_splitmix))

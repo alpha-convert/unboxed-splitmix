@@ -19,7 +19,7 @@
  (name unboxed_splitmix)
  (synopsis "SplitMix implementation with Unboxed Types")
  (description "An implementation of the SplitMix algorithm using unboxed types")
- (depends ocaml__5_2_0+flambda2 dune)
+ (depends ocaml dune)
  (tags
   ("add topics" "to describe" your project)))
 

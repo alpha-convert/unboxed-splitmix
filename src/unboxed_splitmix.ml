@@ -33,13 +33,13 @@ let mix64_variant13 z =
   mix_bits_31 z
 ;;
 
-let mix_odd_gamma z =
+let [@zero_alloc] mix_odd_gamma z =
   let z = I.logor (mix64_variant13 z) #1L in
   (* TODO use immediate popcount here... ocaml intrinsics isn't building on arm64. *)
   let n = Core.Int64.popcount (I.to_int64 (I.logxor z (I.shift_right_logical z 1))) in
   if n < 24 then I.logxor z #0xaaaa_aaaa_aaaa_aaaaL else z
 
-let next_seed t =
+let [@zero_alloc] next_seed t =
   let next = I.add t.seed t.odd_gamma in
   t.seed <- next;
   next
@@ -65,18 +65,18 @@ let split t =
 
 let next_int64 t = mix64 (next_seed t)
 
-let perturb t salt =
+let [@zero_alloc] perturb t salt =
   let next = I.add t.seed (mix64 (I.of_int salt)) in
   t.seed <- next
 ;;
 
-let bool (state @ local) = 
+let [@zero_alloc] bool (state @ local) = 
   I.equal (I.logand (next_int64 state) #1L) #0L
 
-let remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
+let [@zero_alloc] remainder_is_unbiased ~draw ~remainder ~draw_maximum ~remainder_maximum =
     I.compare (I.sub draw remainder) (I.sub draw_maximum remainder_maximum) <= 0
 
-let rec between state ~lo ~hi =
+let [@zero_alloc] rec between state ~lo ~hi =
     let draw = next_int64 state in
     if I.compare lo draw <= 0 && I.compare draw hi <= 0 then draw else between state ~lo ~hi
 
@@ -130,4 +130,46 @@ let [@zero_alloc] floatu =
     finite_float state ~lo ~hi
 ;;
 
+let float =
+  fun (state @ local) ~lo ~hi -> F.to_float (floatu state ~lo:(F.of_float lo) ~hi:(F.of_float hi))
+;;
 
+let int64 =
+  fun (state @ local) ~lo ~hi -> I.to_int64 (int64u state ~lo:(I.of_int64 lo) ~hi:(I.of_int64 hi))
+;;
+
+let int state ~lo ~hi =
+  I.to_int (int64u state ~lo:(I.of_int lo) ~hi:(I.of_int hi))
+;;
+
+external sm_seed : Splittable_random.t -> Int64.t = "sm_seed"
+external sm_odd_gamma : Splittable_random.t -> Int64.t = "sm_odd_gamma"
+external clobber_seed : Splittable_random.t -> Int64.t -> unit = "sm_clobber_seed"
+
+
+module DropIn = struct
+  let copy_sm sm =
+    let sd = sm_seed sm in
+    let og = sm_odd_gamma sm in
+    {seed = I.of_int64 sd ; odd_gamma = I.of_int64 og}
+
+  let int sm ~lo ~hi =
+    let us = copy_sm sm in
+    let i = int us ~lo ~hi in
+    clobber_seed sm (I.to_int64 us.seed);
+    (* would love to fix this roundtrip through int64.t, but clobber_seed can't be defined with an int64# *)
+    i
+
+  let float sm ~lo ~hi =
+    let us = copy_sm sm in
+    let f = float us ~lo ~hi in
+    clobber_seed sm (I.to_int64 us.seed);
+    f
+
+  let int64 sm ~lo ~hi =
+    let us = copy_sm sm in
+    let i64 = int64 us ~lo ~hi in
+    clobber_seed sm (I.to_int64 us.seed);
+    i64
+
+end
