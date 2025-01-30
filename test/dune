@@ -1,2 +1,3 @@
 (test
+ (libraries core stdlib_upstream_compatible splittable_random core_bench unboxed_splitmix)
  (name test_splitmix))
